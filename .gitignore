@@ -1,0 +1,5 @@
+gpt2/
+Qwen2.5-0.5B/
+.vscode/
+__pycache__/
+*.pyc
