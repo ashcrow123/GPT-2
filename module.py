@@ -26,6 +26,7 @@ class MultiHeadAttention(nn.Module):
         self.head_dim = config.n_embd // config.n_head
         self.c_attn=nn.Linear(self.n_embd,3*self.head_dim*self.n_head)
         self.c_proj = nn.Linear(self.n_head * self.head_dim, self.n_embd)
+        self.c_proj.NANOGPT_SCALE_INIT=1
         # self.scale=torch.tensor(self.head_dim ** -0.5)
     def forward(self, x):
         qkv=self.c_attn(x) #(B,seq_len,3*head_dim*n_head)
@@ -49,6 +50,7 @@ class MLP(nn.Module):
         super().__init__()
         self.c_fc=nn.Linear(config.n_embd,4*config.n_embd)
         self.c_proj=nn.Linear(4*config.n_embd,config.n_embd)
+        self.c_proj.NANOGPT_SCALE_INIT=1
         self.activation=nn.GELU(approximate='tanh')
     def forward(self,x):
         x=self.c_fc(x)
@@ -151,8 +153,6 @@ class GPT2(nn.Module):
         global master_process
         param_dict = {pn: p for pn, p in self.named_parameters()}
         param_dict = {pn: p for pn, p in param_dict.items() if p.requires_grad}
-        # create optim groups. Any parameters that is 2D will be weight decayed, otherwise no.
-        # i.e. all weight tensors in matmuls + embeddings decay, all biases and layernorms don't.
         decay_params = [p for n, p in param_dict.items() if p.dim() >= 2]
         nodecay_params = [p for n, p in param_dict.items() if p.dim() < 2]
         optim_groups = [
@@ -171,4 +171,3 @@ class GPT2(nn.Module):
             print(f"using fused AdamW: {use_fused}")
         optimizer = torch.optim.AdamW(optim_groups, lr=learning_rate, betas=(0.9, 0.95), eps=1e-8, fused=use_fused)
         return optimizer
-    
