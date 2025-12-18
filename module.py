@@ -149,8 +149,7 @@ class GPT2(nn.Module):
                 with torch.no_grad():
                     sd[k].copy_(sd_hf[k])
         return model
-    def configure_optimizers(self, weight_decay, learning_rate, device_type):
-        global master_process
+    def configure_optimizers(self, weight_decay, learning_rate, device_type,master_process):
         param_dict = {pn: p for pn, p in self.named_parameters()}
         param_dict = {pn: p for pn, p in param_dict.items() if p.requires_grad}
         decay_params = [p for n, p in param_dict.items() if p.dim() >= 2]

@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import os
+import math
 #-----------------------------distributed-------------------------
 from torch.distributed import init_process_group,destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -42,8 +43,8 @@ grad_accum_steps=total_batch_size//(B*T*ddp_world_size)
 if master_process:
     print(f"total desired batch size: {total_batch_size}")
     print(f"=> calculated gradient accumulation steps: {grad_accum_steps}")
-train_loader=DataLoaderLite(B=B,T=T,process_rank=ddp_rank,num_processes=ddp_world_size,split='train')
-val_loader=DataLoaderLite(B=B,T=T,process_rank=ddp_rank,num_processes=ddp_world_size,split='val')
+train_loader=DataLoaderLite(B=B,T=T,process_rank=ddp_rank,num_processes=ddp_world_size,split='train',master_process=master_process)
+val_loader=DataLoaderLite(B=B,T=T,process_rank=ddp_rank,num_processes=ddp_world_size,split='val',master_process=master_process)
 
 config=GPT2Config(vocab_size=50304)
 model=GPT2(config=config)
@@ -68,7 +69,7 @@ def get_lr(it):
     assert 0 <= decay_ratio <= 1
     coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio)) # coeff starts at 1 and goes to 0
     return min_lr + coeff * (max_lr - min_lr)
-optimizer=raw_model.configure_optimizers(weight_decay=1e-1,learning_rate=max_lr,device_type=device_type)
+optimizer=raw_model.configure_optimizers(weight_decay=1e-1,learning_rate=max_lr,device_type=device_type,master_process=master_process)
 log_dir = "log"
 os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, f"log.txt")

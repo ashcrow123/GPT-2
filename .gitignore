@@ -3,3 +3,8 @@ Qwen2.5-0.5B/
 .vscode/
 __pycache__/
 *.pyc
+log/
+nohup.out
+Yi-1.5-6B/
+TigerResearch_pretrain_zh/
+edu_fineweb10B/
